@@ -33,6 +33,12 @@ def wrench(f, p):
     """
     ########## Your code starts here ##########
     # Hint: you may find cross_matrix(x) defined above helpful. This should be one line of code.
+    print(f)
+    print(p)
+    print(cross_matrix(p))
+    print(cross_matrix(p) @ f)
+    w = np.hstack((f, cross_matrix(p) @ f))
+    print(w)
 
     ########## Your code ends here ##########
 
@@ -93,10 +99,14 @@ def form_closure_program(F):
     ########## Your code starts here ##########
     # Hint: you may find np.linalg.matrix_rank(F) helpful
     # TODO: Replace the following program (check the cvxpy documentation)
+    num_dim = F.shape[0]
+    num_wrenches = F.shape[1]
 
-    # k = cp.Variable(1)
-    # objective = cp.Minimize(k)
-    # constraints = [k >= 0]
+    # zeros = np.zeros((num_dim,))
+    # ones = np.ones((num_wrenches,))
+    k = cp.Variable(num_wrenches)
+    objective = cp.Minimize(cp.sum(k))
+    constraints = [F @ k == 0, k >= 1]
 
 
     ########## Your code ends here ##########
@@ -120,7 +130,23 @@ def is_in_form_closure(normals, points):
     """
     ########## Your code starts here ##########
     # TODO: Construct the F matrix (not necessarily 6 x 7)
-    F = np.zeros((6,7))
+    wrench_dim = 0 
+    if normals[0].shape[0] == 2:
+        wrench_dim = 3
+    elif normals[0].shape[0] == 3:
+        wrench_dim = 6
+    else:
+        raise Exception("Normals need to be 2D or 3D")
+
+    num_points = len(points)
+
+
+    F = np.zeros((wrench_dim,num_points))
+    for i in range(num_points):
+        F[:, i] = wrench(normals[i], points[i])
+
+
+    
 
 
     ########## Your code ends here ##########
