@@ -33,6 +33,7 @@ def wrench(f, p):
     """
     ########## Your code starts here ##########
     # Hint: you may find cross_matrix(x) defined above helpful. This should be one line of code.
+    #print(f.shape)
     w = np.hstack((f, cross_matrix(p) @ f))
 
     ########## Your code ends here ##########
@@ -58,7 +59,6 @@ def cone_edges(f, mu):
     # Edge case for frictionless contact
     if mu == 0.:
         return [f]
-
     # Planar wrenches
     D = f.shape[0]
     if D == 2:
@@ -67,18 +67,19 @@ def cone_edges(f, mu):
         randvec1 = np.ones((D))
         loc1 = cross_matrix(f).reshape((D,)) #@ randvec1
         loc2 = -loc1
-        print(f)
-        print(randvec1)
-        print(loc1)
-        print(loc1.shape)
-        print(cross_matrix(f).shape)
+        # print(f)
+        # print(randvec1)
+        # print(loc1)
+        # print(loc1.shape)
+        # print(cross_matrix(f).shape)
 
         e1 = loc1*(1.0/np.linalg.norm(loc1)) * (mu*np.linalg.norm(f)) + f
         e2 = loc2*(1.0/np.linalg.norm(loc2)) * (mu*np.linalg.norm(f)) + f
         edges[0] = e1
+        #print(edges)
         edges[1] = e2
 
-        print(edges)
+        #print(edges)
 
 
         ########## Your code ends here ##########
@@ -90,8 +91,8 @@ def cone_edges(f, mu):
         randvec1 = np.ones((D))
         loc1 = cross_matrix(f) @ randvec1
         loc2 = cross_matrix(f) @ loc1
-        loc3 = -loc1
-        loc4 = -loc2
+        loc3 = -loc1.copy()
+        loc4 = -loc2.copy()
 
         #rescaling_factor = 1.0*/np.linalg.norm(f)
 
@@ -204,28 +205,38 @@ def is_in_force_closure(forces, points, friction_coeffs):
     wrench_dim = 0
     col_dim = 0
     num_edges_per_cone =0
+
     if D == 2:
         wrench_dim = 3
         num_edges_per_cone = 2
-        col_dim = num_edges_per_cone*num_forces
+        #col_dim = num_edges_per_cone*num_forces
     elif D == 3:
         wrench_dim = 6  
         num_edges_per_cone = 4
-        col_dim = num_edges_per_cone*num_forces
+        #col_dim = num_edges_per_cone*num_forces
     else:
         raise Exception("D either 2 or 3 dimension")
+    
+    col_dim = 0
+    for coeff in friction_coeffs:
+        if coeff != 0:
+            col_dim += num_edges_per_cone
+        else:
+            col_dim += 1
 
     F = np.zeros((wrench_dim, col_dim))
+    print(col_dim)
+    print(friction_coeffs)
+    curr_col = 0
     for i in range(num_forces):
         curr_force = forces[i]
         curr_point = points[i]
         curr_coeff = friction_coeffs[i]
         edges = cone_edges(curr_force, curr_coeff)
-        base = i*num_edges_per_cone
         for j, edge_force in enumerate(edges):
-            idx = base + j
-            #print(idx)
-            F[:, idx] = wrench(edge_force, curr_point) 
+            F[:, curr_col] = wrench(edge_force, curr_point) 
+            curr_col += 1
+
     
 
 
