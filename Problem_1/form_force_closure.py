@@ -33,7 +33,6 @@ def wrench(f, p):
     """
     ########## Your code starts here ##########
     # Hint: you may find cross_matrix(x) defined above helpful. This should be one line of code.
-    #print(f.shape)
     w = np.hstack((f, cross_matrix(p) @ f))
 
     ########## Your code ends here ##########
@@ -66,21 +65,12 @@ def cone_edges(f, mu):
         edges = [np.zeros(D)] * 2
         randvec1 = np.ones((D))
         loc1 = cross_matrix(f).reshape((D,)) #@ randvec1
-        loc2 = -loc1
-        # print(f)
-        # print(randvec1)
-        # print(loc1)
-        # print(loc1.shape)
-        # print(cross_matrix(f).shape)
+        loc2 = -loc1.copy()
 
         e1 = loc1*(1.0/np.linalg.norm(loc1)) * (mu*np.linalg.norm(f)) + f
         e2 = loc2*(1.0/np.linalg.norm(loc2)) * (mu*np.linalg.norm(f)) + f
         edges[0] = e1
-        #print(edges)
         edges[1] = e2
-
-        #print(edges)
-
 
         ########## Your code ends here ##########
 
@@ -135,7 +125,8 @@ def form_closure_program(F):
     # ones = np.ones((num_wrenches,))
     k = cp.Variable(num_wrenches)
     objective = cp.Minimize(cp.sum(k))
-    constraints = [F @ k == 0]
+    F_min_dim = min(F.shape[0], F.shape[1])
+    constraints = [F @ k == 0, cp.Constant(np.linalg.matrix_rank(F)) == F_min_dim]
 
     for i in range(num_wrenches):
         constraints.append(k[i] >= 1)
@@ -209,11 +200,9 @@ def is_in_force_closure(forces, points, friction_coeffs):
     if D == 2:
         wrench_dim = 3
         num_edges_per_cone = 2
-        #col_dim = num_edges_per_cone*num_forces
     elif D == 3:
         wrench_dim = 6  
         num_edges_per_cone = 4
-        #col_dim = num_edges_per_cone*num_forces
     else:
         raise Exception("D either 2 or 3 dimension")
     
@@ -225,8 +214,6 @@ def is_in_force_closure(forces, points, friction_coeffs):
             col_dim += 1
 
     F = np.zeros((wrench_dim, col_dim))
-    print(col_dim)
-    print(friction_coeffs)
     curr_col = 0
     for i in range(num_forces):
         curr_force = forces[i]
@@ -236,6 +223,7 @@ def is_in_force_closure(forces, points, friction_coeffs):
         for j, edge_force in enumerate(edges):
             F[:, curr_col] = wrench(edge_force, curr_point) 
             curr_col += 1
+   
 
     
 
