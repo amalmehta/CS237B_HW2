@@ -121,8 +121,6 @@ def form_closure_program(F):
     num_dim = F.shape[0]
     num_wrenches = F.shape[1]
 
-    # zeros = np.zeros((num_dim,))
-    # ones = np.ones((num_wrenches,))
     k = cp.Variable(num_wrenches)
     objective = cp.Minimize(cp.sum(k))
     F_min_dim = min(F.shape[0], F.shape[1])
