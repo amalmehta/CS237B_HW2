@@ -33,12 +33,7 @@ def wrench(f, p):
     """
     ########## Your code starts here ##########
     # Hint: you may find cross_matrix(x) defined above helpful. This should be one line of code.
-    print(f)
-    print(p)
-    print(cross_matrix(p))
-    print(cross_matrix(p) @ f)
     w = np.hstack((f, cross_matrix(p) @ f))
-    print(w)
 
     ########## Your code ends here ##########
 
@@ -69,6 +64,22 @@ def cone_edges(f, mu):
     if D == 2:
         ########## Your code starts here ##########
         edges = [np.zeros(D)] * 2
+        randvec1 = np.ones((D))
+        loc1 = cross_matrix(f).reshape((D,)) #@ randvec1
+        loc2 = -loc1
+        print(f)
+        print(randvec1)
+        print(loc1)
+        print(loc1.shape)
+        print(cross_matrix(f).shape)
+
+        e1 = loc1*(1.0/np.linalg.norm(loc1)) * (mu*np.linalg.norm(f)) + f
+        e2 = loc2*(1.0/np.linalg.norm(loc2)) * (mu*np.linalg.norm(f)) + f
+        edges[0] = e1
+        edges[1] = e2
+
+        print(edges)
+
 
         ########## Your code ends here ##########
 
@@ -76,6 +87,23 @@ def cone_edges(f, mu):
     elif D == 3:
         ########## Your code starts here ##########
         edges = [np.zeros(D)] * 4
+        randvec1 = np.ones((D))
+        loc1 = cross_matrix(f) @ randvec1
+        loc2 = cross_matrix(f) @ loc1
+        loc3 = -loc1
+        loc4 = -loc2
+
+        #rescaling_factor = 1.0*/np.linalg.norm(f)
+
+        e1 = loc1*(1.0/np.linalg.norm(loc1)) * (mu*np.linalg.norm(f)) + f
+        e2 = loc2*(1.0/np.linalg.norm(loc2)) * (mu*np.linalg.norm(f)) + f
+        e3 = loc3*(1.0/np.linalg.norm(loc3)) * (mu*np.linalg.norm(f)) + f
+        e4 = loc4*(1.0/np.linalg.norm(loc4)) * (mu*np.linalg.norm(f)) + f
+
+        edges[0] = e1
+        edges[1] = e2
+        edges[2] = e3
+        edges[3] = e4
 
         
         ########## Your code ends here ##########
@@ -106,7 +134,10 @@ def form_closure_program(F):
     # ones = np.ones((num_wrenches,))
     k = cp.Variable(num_wrenches)
     objective = cp.Minimize(cp.sum(k))
-    constraints = [F @ k == 0, k >= 1]
+    constraints = [F @ k == 0]
+
+    for i in range(num_wrenches):
+        constraints.append(k[i] >= 1)
 
 
     ########## Your code ends here ##########
@@ -168,7 +199,34 @@ def is_in_force_closure(forces, points, friction_coeffs):
     """
     ########## Your code starts here ##########
     # TODO: Call cone_edges() to construct the F matrix (not necessarily 6 x 7)
-    F = np.zeros((6,7))    
+    D = forces[0].shape[0]
+    num_forces = len(forces)
+    wrench_dim = 0
+    col_dim = 0
+    num_edges_per_cone =0
+    if D == 2:
+        wrench_dim = 3
+        num_edges_per_cone = 2
+        col_dim = num_edges_per_cone*num_forces
+    elif D == 3:
+        wrench_dim = 6  
+        num_edges_per_cone = 4
+        col_dim = num_edges_per_cone*num_forces
+    else:
+        raise Exception("D either 2 or 3 dimension")
+
+    F = np.zeros((wrench_dim, col_dim))
+    for i in range(num_forces):
+        curr_force = forces[i]
+        curr_point = points[i]
+        curr_coeff = friction_coeffs[i]
+        edges = cone_edges(curr_force, curr_coeff)
+        base = i*num_edges_per_cone
+        for j, edge_force in enumerate(edges):
+            idx = base + j
+            #print(idx)
+            F[:, idx] = wrench(edge_force, curr_point) 
+    
 
 
     ########## Your code ends here ##########
