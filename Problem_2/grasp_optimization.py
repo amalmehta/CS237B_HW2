@@ -67,6 +67,118 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
     cs = []
     ds = []
 
+    x_size = D*M+1
+
+    #defining x and h
+    s = cp.Variable(1)
+    x = np.zeros((x_size))
+    x = grasp_normals[0]
+    for i in range(1, len(grasp_normals)):
+        normal = grasp_normals[i]
+        x = np.hstack((x, normal))
+    s_arr = np.array([s])
+    x = np.hstack((x, s_arr))
+
+    h = np.zeros((x_size))
+    h[-1] = 1
+
+
+    
+    #first half inequality constraints
+    #A
+    j = 0
+    while j+D <= x_size:
+        #print(j)
+        A = np.zeros((D, x_size))
+        begin = j
+        end = j + D
+        ran = list(range(begin, end))
+        A[np.arange(D),ran] = 1
+        j = end
+        As.append(A)
+    
+    #b
+    for _ in range(M):
+        b = np.zeros((D))
+        bs.append(b)
+
+    #c
+    for _ in range(M):
+        c = np.zeros((x_size))
+        c[-1] = 1
+        cs.append(c)
+
+    #d 
+    for _ in range(M):
+        d = 0
+        ds.append(d)
+    
+    #second half inequality constraints
+    #A
+    k = 0
+    while k+(D-1) <= x_size:
+        A = np.zeros((D-1, x_size))
+        begin = k
+        end = k + D -1
+        ran = list(range(begin, end))
+        A[np.arange(D-1),ran] = 1
+        k = end
+        As.append(A)
+    
+    #b
+    for _ in range(M):
+        b = np.zeros((D-1))
+        bs.append(b)
+
+    #c
+    for i in range(M):
+        curr_idx = D*(i+1) -1
+        c = np.zeros((x_size))
+        c[curr_idx] = friction_coeffs[i]
+        cs.append(c)
+         
+
+    #fric_idx = np.arange(D-1, x_size, D)
+    # c = np.zeros((x_size))
+    # c[fric_idx] = np.array(friction_coeffs)
+    # cs.append(c)
+
+    #d 
+    for _ in range(M):
+        d = 0
+        ds.append(d)
+
+    #constructing F matrix
+
+    F = np.zeros((N, x_size))
+    t_all = transformations[0]
+    for i in range(1, len(transformations)):
+        t_all = np.hstack((t_all, transformations[i]))
+    t_all = np.hstack((t_all, np.zeros((D,1))))
+
+    pt_all = cross_matrix(points[0]) @ transformations[0]
+    for i in range(1, len(transformations)):
+        pt_all = np.hstack((pt_all, cross_matrix(points[i]) @ transformations[i]))
+    pt_all = np.hstack((pt_all, np.zeros((D,1))))
+
+    # print(t_all.shape)
+    # print(transformations[0])
+    # print(t_all)
+
+    # print(pt_all.shape)
+    # print(pt_all)
+
+    F = np.vstack((t_all, pt_all))
+
+    g = -wrench_ext
+    print(F)
+    print(F.shape)
+    print(F@x)
+    
+
+
+
+
 
     x = solve_socp(x, As, bs, cs, ds, F, g, h, verbose=False)
 
