@@ -70,7 +70,7 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
     x_size = D*M+1
 
     #defining x and h
-    s = cp.Variable(1)
+    #s = cp.Variable(1)
     x = cp.Variable(x_size)
     # #x[0] = 5
     # print(x)
@@ -103,6 +103,7 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
         A[np.arange(D),ran] = 1
         j = end
         As.append(A)
+    print(As)
     
     #b
     for _ in range(M):
@@ -168,19 +169,10 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
         pt_all = np.hstack((pt_all, cross_matrix(points[i]) @ transformations[i]))
     pt_all = np.hstack((pt_all, np.zeros((N-D,1))))
 
-    # print(t_all.shape)
-    # print(transformations[0])
-    # print(t_all)
-
-    # print(pt_all.shape)
-    # print(pt_all)
 
     F = np.vstack((t_all, pt_all))
-
     g = -wrench_ext
-    # print(F)
-    # print(F.shape)
-    # print(F@x)
+
     
 
 
