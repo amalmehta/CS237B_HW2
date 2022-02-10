@@ -61,7 +61,7 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
     M = len(points)
     transformations = [compute_local_transformation(n) for n in grasp_normals]
 
-    ########## Your code starts here ##########
+    # ########## Your code starts here ##########
     As = []
     bs = []
     cs = []
@@ -70,14 +70,13 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
     x_size = D*M+1
     x = cp.Variable(x_size)
 
-
-
     h = np.zeros((x_size))
     h[-1] = 1
 
     #first half inequality constraints
     #A
     j = 0
+    p=0
     while j+D <= x_size:
         A = np.zeros((D, x_size))
         begin = j
@@ -86,19 +85,20 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
         A[np.arange(D),ran] = 1
         j = end
         As.append(A)
+        p+=1
 
     #second half inequality constraints
     #A
     k = 0
-    while k+(D-1) <= x_size:
+    while k+D <= x_size:
         A = np.zeros((D-1, x_size))
         begin = k
         end = k + D -1
         ran = list(range(begin, end))
         A[np.arange(D-1),ran] = 1
-        k = end
+        k = end+1
         As.append(A)
-    
+
     for i in range(M):
         #first half ineq constraints
         #b
@@ -111,8 +111,8 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
         cs.append(c1)
 
         #d 
-        d = np.reshape(np.array([0]), (1,1))
-        ds.append(d)
+        d1 = np.reshape(np.array([0]), (1,1))
+        ds.append(d1)
     
     for i in range(M):
         #second half ineq constraints
@@ -122,13 +122,13 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
 
         #c
         curr_idx = D*(i+1) -1
-        c = np.zeros((x_size))
-        c[curr_idx] = friction_coeffs[i]
-        cs.append(c)
+        c2 = np.zeros((x_size))
+        c2[curr_idx] = friction_coeffs[i]
+        cs.append(c2)
 
         #d 
-        d = np.reshape(np.array([0]), (1,1))
-        ds.append(d)
+        d2 = np.reshape(np.array([0]), (1,1))
+        ds.append(d2)
 
 
 
@@ -191,18 +191,16 @@ def precompute_force_closure(grasp_normals, points, friction_coeffs):
     #print(M)
     
     for i in range(2*N):
-        print(i)
+        #print(i)
         curr_wrench = np.zeros((N))
         curr_wrench[i//2] = (-1)**i
-        print(curr_wrench)
+        #print(curr_wrench)
         forces = grasp_optimization(grasp_normals, points, friction_coeffs, curr_wrench)
         forces_all = forces[0]
         for j in range(1, len(forces)):
             forces_all = np.hstack((forces_all, forces[j]))
         F[i, :] = forces_all
-    #print(F)
-    import pdb
-    pdb.set_trace()
+
 
 
 
