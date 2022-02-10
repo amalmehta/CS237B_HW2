@@ -68,34 +68,17 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
     ds = []
 
     x_size = D*M+1
-
-    #defining x and h
-    #s = cp.Variable(1)
     x = cp.Variable(x_size)
-    # #x[0] = 5
-    # print(x)
-
-    # x = grasp_normals[0]
-    # for i in range(1, len(grasp_normals)):
-    #     normal = grasp_normals[i]
-    #     x = np.hstack((x, normal))
-    # s_arr = np.array([s])
-    # x = np.hstack((x, s_arr))
-    # print(x.shape)
-    # x = cp.Variable(x)
 
 
 
     h = np.zeros((x_size))
     h[-1] = 1
 
-
-    
     #first half inequality constraints
     #A
     j = 0
     while j+D <= x_size:
-        #print(j)
         A = np.zeros((D, x_size))
         begin = j
         end = j + D
@@ -103,22 +86,19 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
         A[np.arange(D),ran] = 1
         j = end
         As.append(A)
-    print(As)
     
-    #b
     for _ in range(M):
+        #b
         b = np.zeros((D))
         bs.append(b)
 
-    #c
-    for _ in range(M):
+        #c
         c = np.zeros((x_size))
         c[-1] = 1
         cs.append(c)
 
-    #d 
-    for _ in range(M):
-        d = 0
+        #d 
+        d = np.reshape(np.array([0]), (1,1))
         ds.append(d)
     
     #second half inequality constraints
@@ -133,27 +113,19 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
         k = end
         As.append(A)
     
-    #b
-    for _ in range(M):
+    for i in range(M):
+        #b
         b = np.zeros((D-1))
         bs.append(b)
 
-    #c
-    for i in range(M):
+        #c
         curr_idx = D*(i+1) -1
         c = np.zeros((x_size))
         c[curr_idx] = friction_coeffs[i]
         cs.append(c)
-         
 
-    #fric_idx = np.arange(D-1, x_size, D)
-    # c = np.zeros((x_size))
-    # c[fric_idx] = np.array(friction_coeffs)
-    # cs.append(c)
-
-    #d 
-    for _ in range(M):
-        d = 0
+        #d 
+        d = np.reshape(np.array([0]), (1,1))
         ds.append(d)
 
     #constructing F matrix
@@ -171,11 +143,7 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
 
 
     F = np.vstack((t_all, pt_all))
-    g = -wrench_ext
-
-    
-
-
+    g = -1*wrench_ext
 
 
 
@@ -215,6 +183,23 @@ def precompute_force_closure(grasp_normals, points, friction_coeffs):
     #       wrenches and store them as rows in the matrix F. This matrix will be
     #       captured by the returned force_closure() function.
     F = np.zeros((2*N, M*D))
+    #print(N)
+    #print(M)
+    
+    for i in range(2*N):
+        print(i)
+        curr_wrench = np.zeros((N))
+        curr_wrench[i//2] = (-1)**i
+        print(curr_wrench)
+        forces = grasp_optimization(grasp_normals, points, friction_coeffs, curr_wrench)
+        forces_all = forces[0]
+        for j in range(1, len(forces)):
+            forces_all = np.hstack((forces_all, forces[j]))
+        F[i, :] = forces_all
+    #print(F)
+    import pdb
+    pdb.set_trace()
+
 
 
     ########## Your code ends here ##########
