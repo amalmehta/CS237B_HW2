@@ -86,21 +86,7 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
         A[np.arange(D),ran] = 1
         j = end
         As.append(A)
-    
-    for _ in range(M):
-        #b
-        b = np.zeros((D))
-        bs.append(b)
 
-        #c
-        c = np.zeros((x_size))
-        c[-1] = 1
-        cs.append(c)
-
-        #d 
-        d = np.reshape(np.array([0]), (1,1))
-        ds.append(d)
-    
     #second half inequality constraints
     #A
     k = 0
@@ -114,9 +100,25 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
         As.append(A)
     
     for i in range(M):
+        #first half ineq constraints
         #b
-        b = np.zeros((D-1))
-        bs.append(b)
+        b1 = np.zeros((D))
+        bs.append(b1)
+
+        #c
+        c1 = np.zeros((x_size))
+        c1[-1] = 1
+        cs.append(c1)
+
+        #d 
+        d = np.reshape(np.array([0]), (1,1))
+        ds.append(d)
+    
+    for i in range(M):
+        #second half ineq constraints
+        #b
+        b2 = np.zeros((D-1))
+        bs.append(b2)
 
         #c
         curr_idx = D*(i+1) -1
@@ -127,6 +129,8 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
         #d 
         d = np.reshape(np.array([0]), (1,1))
         ds.append(d)
+
+
 
     #constructing F matrix
 
