@@ -23,7 +23,7 @@ class AccelerationLaw(tf.keras.layers.Layer):
         mu, th = inputs
 
         ########## Your code starts here ##########
-        a = self.g*(tf.math.sin(th)- mu*tf.math.cos(th))  # TODO
+        a = self.g*(tf.sin(th)- mu*tf.cos(th))  # TODO
         ########## Your code ends here ##########
 
         # Ensure output acceleration is positive
@@ -59,8 +59,12 @@ def build_model():
     # TODO: Create your neural network and replace the following two layers
     #       according to the given specification.
 
-    p_class = tf.keras.layers.Dense(32, name='p_class', activation="softmax")(img_input)
-    mu = tf.keras.layers.Dense(1, name='mu', use_bias = False)(p_class)
+    out1 = tf.keras.layers.Conv2D(3, 7)(img_input)
+    out2 = tf.keras.layers.Conv2D(5, 5)(out1)
+    flatten = tf.keras.layers.Flatten()(out2)
+
+    p_class = tf.keras.layers.Dense(32, name='p_class', activation="softmax")(flatten)
+    mu = tf.keras.layers.Dense(1, name='mu')(p_class)
 
     ########## Your code ends here ##########
 
@@ -90,6 +94,16 @@ def build_baseline_model():
     ########## Your code starts here ##########
     # TODO: Replace the following with your model from build_model().
 
+    out1 = tf.keras.layers.Conv2D(3, 7)(img_input)
+    out2 = tf.keras.layers.Conv2D(5, 5)(out1)
+    flatten = tf.keras.layers.Flatten()(out2)
+    a_pred = tf.keras.layers.Dense(1)(flatten)
+
+
+
+    #p_class = tf.keras.layers.Dense(32, name='p_class', activation="softmax")(flatten)
+    #mu = tf.keras.layers.Dense(1, name='mu')(p_class)
+
     ########## Your code ends here ##########
 
     return tf.keras.Model(inputs=[img_input, th_input], outputs=[a_pred])
@@ -101,7 +115,7 @@ def loss(a_actual, a_pred):
 
     ########## Your code starts here ##########
     diff = a_actual-a_pred
-    l = tf.norm(diff)  # TODO
+    l = tf.nn.l2_loss(diff)  # TODO
     ########## Your code ends here ##########
 
     return l
