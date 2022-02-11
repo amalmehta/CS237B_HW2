@@ -76,7 +76,6 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
     #first half inequality constraints
     #A
     j = 0
-    p=0
     while j+D <= x_size:
         A = np.zeros((D, x_size))
         begin = j
@@ -85,7 +84,6 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
         A[np.arange(D),ran] = 1
         j = end
         As.append(A)
-        p+=1
 
     #second half inequality constraints
     #A
@@ -111,7 +109,7 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
         cs.append(c1)
 
         #d 
-        d1 = np.reshape(np.array([0]), (1,1))
+        d1 = 0#np.reshape(np.array([0]), (1,1))
         ds.append(d1)
     
     for i in range(M):
@@ -127,7 +125,7 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
         cs.append(c2)
 
         #d 
-        d2 = np.reshape(np.array([0]), (1,1))
+        d2 = 0#np.reshape(np.array([0]), (1,1))
         ds.append(d2)
 
 
@@ -187,19 +185,16 @@ def precompute_force_closure(grasp_normals, points, friction_coeffs):
     #       wrenches and store them as rows in the matrix F. This matrix will be
     #       captured by the returned force_closure() function.
     F = np.zeros((2*N, M*D))
-    #print(N)
-    #print(M)
     
     for i in range(2*N):
-        #print(i)
         curr_wrench = np.zeros((N))
         curr_wrench[i//2] = (-1)**i
-        #print(curr_wrench)
         forces = grasp_optimization(grasp_normals, points, friction_coeffs, curr_wrench)
         forces_all = forces[0]
         for j in range(1, len(forces)):
             forces_all = np.hstack((forces_all, forces[j]))
         F[i, :] = forces_all
+
 
 
 
@@ -221,6 +216,14 @@ def precompute_force_closure(grasp_normals, points, friction_coeffs):
         ########## Your code starts here ##########
         # TODO: Compute the force closure forces as a stacked vector of shape (M*D)
         f = np.zeros(M*D)
+        wrench_size = len(wrench_ext)
+        signed_wrench_ext = [max(0, wrench_ext[i//2]) if i%2==0 else max(0, -wrench_ext[i//2]) for i in range(wrench_size*2) ]
+
+        for i in range(M):
+            curr_forces = F[:, i*D:(i+1)*D]
+            curr_grasp_force = signed_wrench_ext @ curr_forces
+            f[i*D:(i+1)*D] = curr_grasp_force
+
 
   
         ########## Your code ends here ##########
