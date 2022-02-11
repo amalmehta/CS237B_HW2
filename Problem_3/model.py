@@ -59,8 +59,8 @@ def build_model():
     # TODO: Create your neural network and replace the following two layers
     #       according to the given specification.
 
-    out1 = tf.keras.layers.Conv2D(3, 7)(img_input)
-    out2 = tf.keras.layers.Conv2D(5, 5)(out1)
+    out1 = tf.keras.layers.Conv2D(9, 9)(img_input)
+    out2 = tf.keras.layers.Conv2D(7, 7)(out1)
     flatten = tf.keras.layers.Flatten()(out2)
 
     p_class = tf.keras.layers.Dense(32, name='p_class', activation="softmax")(flatten)
@@ -94,8 +94,8 @@ def build_baseline_model():
     ########## Your code starts here ##########
     # TODO: Replace the following with your model from build_model().
 
-    out1 = tf.keras.layers.Conv2D(3, 7)(img_input)
-    out2 = tf.keras.layers.Conv2D(5, 5)(out1)
+    out1 = tf.keras.layers.Conv2D(9, 9)(img_input)
+    out2 = tf.keras.layers.Conv2D(7, 7)(out1)
     flatten = tf.keras.layers.Flatten()(out2)
     a_pred = tf.keras.layers.Dense(1)(flatten)
 
